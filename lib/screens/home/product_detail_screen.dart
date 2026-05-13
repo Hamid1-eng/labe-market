@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-// import '../../core/constants/colors.dart'; // retired: not used in this screen
+
 import '../../models/product_model.dart';
 import '../../providers/product_provider.dart';
+import '../../services/audio_service.dart';
 
 class ProductDetailScreen extends StatelessWidget {
   const ProductDetailScreen({super.key});
@@ -12,7 +13,9 @@ class ProductDetailScreen extends StatelessWidget {
     final text = price.toString();
     final buffer = StringBuffer();
     for (int i = 0; i < text.length; i++) {
-      if (i > 0 && (text.length - i) % 3 == 0) buffer.write(' ');
+      if (i > 0 && (text.length - i) % 3 == 0) {
+        buffer.write(' ');
+      }
       buffer.write(text[i]);
     }
     return buffer.toString();
@@ -79,6 +82,12 @@ class ProductDetailScreen extends StatelessWidget {
                     ),
                   ),
                   IconButton(
+                    onPressed: () async {
+                      await AudioService().readProductGuide(product.name);
+                    },
+                    icon: const Icon(Icons.record_voice_over_rounded, size: 27),
+                  ),
+                  IconButton(
                     onPressed: () {},
                     icon: const Icon(Icons.share_rounded, size: 27),
                   ),
@@ -93,7 +102,7 @@ class ProductDetailScreen extends StatelessWidget {
               ),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
+                  padding: const EdgeInsets.fromLTRB(0, 0, 0, 110),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -137,23 +146,12 @@ class ProductDetailScreen extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                                IconButton(
-                                  onPressed: () => context
-                                      .read<ProductProvider>()
-                                      .toggleFavorite(product.id),
-                                  icon: Icon(
-                                    isFavorite
-                                        ? Icons.favorite_rounded
-                                        : Icons.favorite_border_rounded,
-                                    size: 28,
-                                  ),
-                                ),
                               ],
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 10),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Container(
@@ -166,7 +164,7 @@ class ProductDetailScreen extends StatelessWidget {
                           child: Row(
                             children: [
                               CircleAvatar(
-                                radius: 60,
+                                radius: 34,
                                 backgroundImage: NetworkImage(
                                   product.producerAvatar?.isNotEmpty == true
                                       ? product.producerAvatar!
@@ -213,16 +211,17 @@ class ProductDetailScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 12),
                                     OutlinedButton(
-                                      onPressed: () =>
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Profil producteur ouvert',
-                                              ),
+                                      onPressed: () {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Profil producteur ouvert',
                                             ),
                                           ),
+                                        );
+                                      },
                                       style: OutlinedButton.styleFrom(
                                         foregroundColor: Colors.black,
                                         side: const BorderSide(
@@ -331,11 +330,11 @@ class ProductDetailScreen extends StatelessWidget {
                         onPressed: () async {
                           await callPhone(context, phone);
                         },
-                        icon: const Icon(Icons.phone_rounded),
+                        icon: const Icon(Icons.phone_rounded, size: 20),
                         label: const Text(
                           'Appeler',
                           style: TextStyle(
-                            fontSize: 17,
+                            fontSize: 15,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -346,21 +345,48 @@ class ProductDetailScreen extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(18),
                           ),
+                          padding: EdgeInsets.zero,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: 56,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('${product.name} ajouté au panier'),
+                            duration: const Duration(seconds: 2),
+                            backgroundColor: const Color(0xFF1B6F1E),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF17D1E),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        elevation: 0,
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: const Icon(Icons.shopping_cart_rounded, size: 24),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: SizedBox(
                       height: 56,
                       child: ElevatedButton.icon(
                         onPressed: () => openWhatsApp(context, phone),
-                        icon: const Icon(Icons.chat),
+                        icon: const Icon(Icons.chat, size: 20),
                         label: const Text(
                           'WhatsApp',
                           style: TextStyle(
-                            fontSize: 17,
+                            fontSize: 15,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -371,6 +397,7 @@ class ProductDetailScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(18),
                           ),
                           elevation: 0,
+                          padding: EdgeInsets.zero,
                         ),
                       ),
                     ),

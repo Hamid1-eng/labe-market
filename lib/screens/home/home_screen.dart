@@ -7,6 +7,7 @@ import '../../models/product_model.dart';
 import '../../providers/product_provider.dart';
 import '../../widgets/buyer_bottom_nav.dart';
 import '../../widgets/buyer_drawer.dart';
+import '../../services/audio_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -102,9 +103,13 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: const Color(0xFFF4F7ED),
       drawer: const BuyerDrawer(),
       floatingActionButton: _AudioButton(
-        onTap: () => ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Guide audio activé'))),
+        onTap: () async {
+          await AudioService().readHomeGuide();
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Guide audio en Pular activé')),
+          );
+        },
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
@@ -231,6 +236,15 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             onPressed: () => Navigator.pushNamed(context, '/map'),
             icon: const Icon(Icons.search, size: 30, color: Color(0xFF333333)),
+          ),
+          const SizedBox(width: 4),
+          IconButton(
+            onPressed: () => Navigator.pushNamed(context, '/notifications'),
+            icon: const Icon(
+              Icons.notifications_outlined,
+              size: 28,
+              color: Color(0xFF333333),
+            ),
           ),
           const SizedBox(width: 4),
           Container(

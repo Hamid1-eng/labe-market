@@ -10,7 +10,7 @@ class BuyerBottomNav extends StatelessWidget {
   const BuyerBottomNav({
     super.key,
     required this.currentIndex,
-    this.variant = BuyerBottomNavVariant.market,
+    this.variant = BuyerBottomNavVariant.favorites,
   });
 
   static const List<String> _marketRoutes = [
@@ -36,7 +36,11 @@ class BuyerBottomNav extends StatelessWidget {
         Icons.chat_rounded,
         'Messages',
       ),
-      _NavItem(Icons.shopping_cart_outlined, Icons.shopping_cart_rounded, 'Panier'),
+      _NavItem(
+        Icons.shopping_cart_outlined,
+        Icons.shopping_cart_rounded,
+        'Panier',
+      ),
     ],
     BuyerBottomNavVariant.favorites => const [
       _NavItem(Icons.storefront_outlined, Icons.storefront_rounded, 'Marché'),
@@ -46,7 +50,11 @@ class BuyerBottomNav extends StatelessWidget {
         Icons.favorite_rounded,
         'Favoris',
       ),
-      _NavItem(Icons.shopping_cart_outlined, Icons.shopping_cart_rounded, 'Panier'),
+      _NavItem(
+        Icons.shopping_cart_outlined,
+        Icons.shopping_cart_rounded,
+        'Panier',
+      ),
     ],
   };
 

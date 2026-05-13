@@ -1,12 +1,15 @@
-import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:image_picker/image_picker.dart';
+﻿import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+
 import '../../core/constants/colors.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/audio_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/storage_service.dart';
-import '../../providers/auth_provider.dart';
 import '../../widgets/buyer_bottom_nav.dart';
 import '../../widgets/buyer_drawer.dart';
 
@@ -53,10 +56,7 @@ class ProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
                   color: const Color(0xFFEAF3E5),
                   borderRadius: BorderRadius.circular(999),
@@ -115,8 +115,7 @@ class ProfileScreen extends StatelessWidget {
                     background: const Color(0xFFF7DCCB),
                     iconColor: const Color(0xFF8A4800),
                     label: 'Mes Favoris',
-                    onTap: () =>
-                        Navigator.pushReplacementNamed(context, '/favorites'),
+                    onTap: () => Navigator.pushReplacementNamed(context, '/favorites'),
                   ),
                   _MenuRowItem(
                     icon: Icons.history_rounded,
@@ -141,9 +140,13 @@ class ProfileScreen extends StatelessWidget {
                     background: const Color(0xFFE8D8E1),
                     iconColor: const Color(0xFFA04072),
                     label: 'Aide Audio',
-                    onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Aide audio activée')),
-                    ),
+                    onTap: () async {
+                      await AudioService().readProfileGuide();
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Aide audio en Pular activée')),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -155,11 +158,7 @@ class ProfileScreen extends StatelessWidget {
                   onPressed: () async {
                     await AuthService().signOut();
                     if (!context.mounted) return;
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/',
-                      (route) => false,
-                    );
+                    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
                   },
                   icon: const Icon(Icons.logout_rounded),
                   label: const Text(
@@ -217,6 +216,15 @@ class _Header extends StatelessWidget {
             ),
           ),
         ),
+        IconButton(
+          onPressed: () => Navigator.pushNamed(context, '/notifications'),
+          icon: const Icon(
+            Icons.notifications_outlined,
+            color: Color(0xFF2F2F2F),
+            size: 28,
+          ),
+        ),
+        const SizedBox(width: 4),
         IconButton(
           onPressed: () => Navigator.pushNamed(context, '/messages'),
           icon: const Icon(
@@ -385,7 +393,7 @@ class _EditableAvatarState extends State<_EditableAvatar> {
       if (url != null) {
         widget.onImageUploaded(url);
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Erreur lors du téléchargement de l\'image')),

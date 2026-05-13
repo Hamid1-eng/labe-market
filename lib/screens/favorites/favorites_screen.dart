@@ -190,6 +190,14 @@ class _Header extends StatelessWidget {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
           ),
+          IconButton(
+            onPressed: () => Navigator.pushNamed(context, '/notifications'),
+            icon: const Icon(
+              Icons.notifications_outlined,
+              color: AppColors.primary,
+              size: 26,
+            ),
+          ),
           const CircleAvatar(
             radius: 14,
             backgroundImage: NetworkImage(

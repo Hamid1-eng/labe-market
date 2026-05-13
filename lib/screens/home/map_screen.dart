@@ -8,10 +8,16 @@ import '../../models/product_model.dart';
 import '../../providers/product_provider.dart';
 import '../../widgets/buyer_bottom_nav.dart';
 import '../../widgets/buyer_drawer.dart';
+import '../../services/audio_service.dart';
 
-class MapScreen extends StatelessWidget {
+class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
+  @override
+  State<MapScreen> createState() => _MapScreenState();
+}
+
+class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     final products = context.watch<ProductProvider>().items;
@@ -38,28 +44,52 @@ class MapScreen extends StatelessWidget {
                           ),
                           children: [
                             TileLayer(
-                              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              urlTemplate:
+                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                               userAgentPackageName: 'com.labe.market',
                             ),
                             MarkerLayer(
                               markers: products.map((p) {
                                 final hash = p.id.hashCode;
                                 final random = Random(hash);
-                                final latOffset = (random.nextDouble() - 0.5) * 0.05;
-                                final lngOffset = (random.nextDouble() - 0.5) * 0.05;
+                                final latOffset =
+                                    (random.nextDouble() - 0.5) * 0.05;
+                                final lngOffset =
+                                    (random.nextDouble() - 0.5) * 0.05;
                                 return Marker(
-                                  point: LatLng(11.3167 + latOffset, -12.2833 + lngOffset),
-                                  width: 150,
-                                  height: 80,
-                                  alignment: Alignment.topCenter,
+                                  point: LatLng(
+                                    11.3167 + latOffset,
+                                    -12.2833 + lngOffset,
+                                  ),
+                                  width: 48,
+                                  height: 48,
+                                  alignment: Alignment.center,
                                   child: GestureDetector(
                                     onTap: () {
-                                      Navigator.pushNamed(context, '/product/detail', arguments: p);
+                                      showModalBottomSheet(
+                                        context: context,
+                                        shape: const RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.vertical(
+                                            top: Radius.circular(18),
+                                          ),
+                                        ),
+                                        builder: (_) => _BottomProductCard(
+                                          product: p,
+                                          onTap: () => Navigator.pushNamed(
+                                            context,
+                                            '/product/detail',
+                                            arguments: p,
+                                          ),
+                                        ),
+                                      );
                                     },
-                                    child: _MapTag(
-                                      label: p.name.length > 12 ? '${p.name.substring(0, 12)}...' : p.name,
-                                      color: const Color(0xFF1B6F1E),
-                                      icon: Icons.eco_rounded,
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: Icon(
+                                        Icons.eco_rounded,
+                                        color: const Color(0xFF1B6F1E),
+                                        size: 28,
+                                      ),
                                     ),
                                   ),
                                 );
@@ -75,7 +105,7 @@ class MapScreen extends StatelessWidget {
                           icon: Icons.volume_up_rounded,
                           color: const Color(0xFF1B6F1E),
                           onTap: () {},
-                          size: 86,
+                          size: 56,
                         ),
                       ),
                       Positioned(
@@ -106,20 +136,7 @@ class MapScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      Positioned(
-                        bottom: 90,
-                        left: 18,
-                        right: 18,
-                        child: _BottomProductCard(
-                          onTap: featured == null
-                              ? null
-                              : () => Navigator.pushNamed(
-                                  context,
-                                  '/product/detail',
-                                  arguments: featured,
-                                ),
-                        ),
-                      ),
+                      // Note: product details now shown on marker tap via bottom sheet.
                     ],
                   ),
                 ),
@@ -130,13 +147,11 @@ class MapScreen extends StatelessWidget {
               right: 24,
               child: FloatingActionButton(
                 backgroundColor: const Color(0xFFF57C00),
-                onPressed: featured == null
-                    ? null
-                    : () => Navigator.pushNamed(
-                        context,
-                        '/product/detail',
-                        arguments: featured,
-                      ),
+                onPressed: () async {
+                  await AudioService().readProductGuide(
+                    featured?.name ?? 'Marché',
+                  );
+                },
                 child: const Icon(
                   Icons.record_voice_over_rounded,
                   color: Colors.white,
@@ -181,6 +196,15 @@ class MapScreen extends StatelessWidget {
               Icons.search_rounded,
               color: Color(0xFF3B3B3B),
               size: 32,
+            ),
+          ),
+          const SizedBox(width: 6),
+          IconButton(
+            onPressed: () => Navigator.pushNamed(context, '/notifications'),
+            icon: const Icon(
+              Icons.notifications_outlined,
+              color: Color(0xFF3B3B3B),
+              size: 28,
             ),
           ),
           const SizedBox(width: 6),
@@ -302,7 +326,7 @@ class _RoundActionButton extends StatelessWidget {
     required this.color,
     required this.onTap,
     this.iconColor = Colors.white,
-    this.size = 72,
+    this.size = 46,
   });
 
   @override
@@ -317,7 +341,7 @@ class _RoundActionButton extends StatelessWidget {
         child: SizedBox(
           width: size,
           height: size,
-          child: Icon(icon, color: iconColor, size: 34),
+          child: Icon(icon, color: iconColor, size: 28),
         ),
       ),
     );
@@ -347,9 +371,9 @@ class _RoundSquareButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: SizedBox(
-          width: 84,
-          height: 84,
-          child: Icon(icon, color: iconColor, size: 30),
+          width: 64,
+          height: 64,
+          child: Icon(icon, color: iconColor, size: 24),
         ),
       ),
     );
@@ -357,9 +381,10 @@ class _RoundSquareButton extends StatelessWidget {
 }
 
 class _BottomProductCard extends StatelessWidget {
+  final ProductModel product;
   final VoidCallback? onTap;
 
-  const _BottomProductCard({required this.onTap});
+  const _BottomProductCard({required this.product, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -378,59 +403,60 @@ class _BottomProductCard extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(14),
               child: Image.network(
-                'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=300&h=300&fit=crop',
-                width: 110,
-                height: 110,
+                product.imageUrl.isNotEmpty
+                    ? product.imageUrl
+                    : 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=300&h=300&fit=crop',
+                width: 90,
+                height: 90,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Container(
-                  width: 110,
-                  height: 110,
+                  width: 90,
+                  height: 90,
                   color: const Color(0xFFE5EBDD),
                   child: const Icon(Icons.image_not_supported),
                 ),
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'PRODUCTEUR VÉRÉFIÉ',
-                        style: TextStyle(
+                        product.verified ? 'PRODUCTEUR VÉRIFIÉ' : 'PRODUCTEUR',
+                        style: const TextStyle(
                           color: Color(0xFF1B6F1E),
-                          fontSize: 13,
+                          fontSize: 12,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.5,
                         ),
                       ),
-                      Icon(
+                      const Icon(
                         Icons.favorite_border_rounded,
                         color: Color(0xFF394239),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Pommes de Terre\nde Labé',
-                    style: TextStyle(
-                      fontSize: 24,
+                  const SizedBox(height: 8),
+                  Text(
+                    product.name,
+                    style: const TextStyle(
+                      fontSize: 18,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF121826),
-                      height: 1.05,
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          '45,000 GNF /',
-                          style: TextStyle(
-                            fontSize: 22,
+                          '${product.price} GNF /',
+                          style: const TextStyle(
+                            fontSize: 18,
                             color: Color(0xFF1B6F1E),
                             fontWeight: FontWeight.w500,
                           ),
@@ -438,7 +464,7 @@ class _BottomProductCard extends StatelessWidget {
                       ),
                       SizedBox(
                         width: 82,
-                        height: 42,
+                        height: 40,
                         child: ElevatedButton(
                           onPressed: onTap,
                           style: ElevatedButton.styleFrom(
