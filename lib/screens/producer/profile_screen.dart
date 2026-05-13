@@ -1,9 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import '../../core/constants/colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/product_provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/storage_service.dart';
 import '../../widgets/producer_bottom_nav.dart';
 
 class ProducerProfileScreen extends StatelessWidget {
@@ -14,7 +18,7 @@ class ProducerProfileScreen extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     final products = context.watch<ProductProvider>().items;
     final user = auth.user;
-    final sellerName = user?.name ?? 'Saliou Diallo';
+    final sellerName = user?.name ?? 'Producteur Local';
     final sellerPhone = user?.phone.isNotEmpty == true
         ? user!.phone
         : 'Labé Producteur';
@@ -56,32 +60,12 @@ class ProducerProfileScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  Stack(
-                    children: [
-                      const CircleAvatar(
-                        radius: 40,
-                        backgroundImage: NetworkImage(
-                          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300',
-                        ),
-                      ),
-                      Positioned(
-                        right: 2,
-                        bottom: 2,
-                        child: Container(
-                          width: 24,
-                          height: 24,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.settings,
-                            size: 14,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
+                  _EditableAvatar(
+                    photoUrl: user?.photoUrl,
+                    onImageUploaded: (url) {
+                      context.read<AuthProvider>().updatePhotoUrl(url);
+                      FirebaseAuth.instance.currentUser?.updatePhotoURL(url);
+                    },
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -396,6 +380,83 @@ class _ReviewCard extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EditableAvatar extends StatefulWidget {
+  final String? photoUrl;
+  final Function(String) onImageUploaded;
+
+  const _EditableAvatar({required this.photoUrl, required this.onImageUploaded});
+
+  @override
+  State<_EditableAvatar> createState() => _EditableAvatarState();
+}
+
+class _EditableAvatarState extends State<_EditableAvatar> {
+  bool _uploading = false;
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final file = await picker.pickImage(source: ImageSource.gallery, maxWidth: 800);
+    if (file == null) return;
+
+    setState(() => _uploading = true);
+    try {
+      final storage = StorageService();
+      final path = 'profiles/${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final url = await storage.uploadFile(File(file.path), path);
+      if (url != null) {
+        widget.onImageUploaded(url);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erreur lors du téléchargement de l\'image')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _pickImage,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CircleAvatar(
+            radius: 40,
+            backgroundColor: const Color(0xFFDCE6FF),
+            backgroundImage: widget.photoUrl != null && widget.photoUrl!.isNotEmpty
+                ? NetworkImage(widget.photoUrl!)
+                : null,
+            child: widget.photoUrl == null || widget.photoUrl!.isEmpty
+                ? const Icon(Icons.person_rounded, size: 40, color: AppColors.primary)
+                : null,
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+              child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 16),
+            ),
+          ),
+          if (_uploading)
+            const Positioned.fill(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
         ],
       ),
     );

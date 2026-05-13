@@ -18,6 +18,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: AppStrings.appName,
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primaryColor: AppColors.primary,
           colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),

@@ -10,4 +10,16 @@ class AuthProvider extends ChangeNotifier {
     user = u;
     notifyListeners();
   }
+
+  void updatePhotoUrl(String url) {
+    if (user != null) {
+      user = UserModel(
+        id: user!.id,
+        name: user!.name,
+        phone: user!.phone,
+        photoUrl: url,
+      );
+      notifyListeners();
+    }
+  }
 }

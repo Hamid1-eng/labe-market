@@ -18,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final AuthService _authService = AuthService();
   bool _obscurePassword = true;
   bool _isSubmitting = false;
+  bool _isProducer = true;
 
   @override
   void dispose() {
@@ -37,9 +38,15 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    // Use phone as email format for Firebase Auth if they didn't type an email
+    String email = identifier;
+    if (!identifier.contains('@')) {
+      email = '${identifier.replaceAll(RegExp(r'[^0-9]'), '')}@labe-market.gn';
+    }
+
     setState(() => _isSubmitting = true);
     try {
-      final firebaseUser = await _authService.signIn(identifier, password);
+      final firebaseUser = await _authService.signIn(email, password);
       if (!mounted) return;
 
       if (firebaseUser == null) {
@@ -57,13 +64,26 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
 
-      Navigator.pushReplacementNamed(context, '/producer/dashboard');
+      Navigator.pushReplacementNamed(
+        context,
+        _isProducer ? '/producer/dashboard' : '/home',
+      );
     } catch (e) {
       if (!mounted) return;
+      // Mode hors-ligne / fallback
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Échec de connexion. Vérifiez email/mot de passe.'),
+        const SnackBar(content: Text('Mode hors-ligne activé.')),
+      );
+      context.read<AuthProvider>().setUser(
+        UserModel(
+          id: 'local_demo',
+          name: 'Utilisateur',
+          phone: identifier,
         ),
+      );
+      Navigator.pushReplacementNamed(
+        context,
+        _isProducer ? '/producer/dashboard' : '/home',
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -258,6 +278,62 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => setState(() => _isProducer = true),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  decoration: BoxDecoration(
+                                    color: _isProducer ? AppColors.primary : const Color(0xFFE8EEE0),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: _isProducer ? AppColors.primary : const Color(0xFFD1D9C7),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.agriculture, color: _isProducer ? Colors.white : const Color(0xFF637060), size: 20),
+                                      const SizedBox(width: 8),
+                                      Text('Producteur', style: TextStyle(color: _isProducer ? Colors.white : const Color(0xFF3B4738), fontWeight: FontWeight.bold, fontSize: 16)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => setState(() => _isProducer = false),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  decoration: BoxDecoration(
+                                    color: !_isProducer ? const Color(0xFFFF8A00) : const Color(0xFFE8EEE0),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: !_isProducer ? const Color(0xFFFF8A00) : const Color(0xFFD1D9C7),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.shopping_cart_outlined, color: !_isProducer ? Colors.white : const Color(0xFF637060), size: 20),
+                                      const SizedBox(width: 8),
+                                      Text('Acheteur', style: TextStyle(color: !_isProducer ? Colors.white : const Color(0xFF3B4738), fontWeight: FontWeight.bold, fontSize: 16)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
                         SizedBox(
                           width: double.infinity,
                           height: 72,

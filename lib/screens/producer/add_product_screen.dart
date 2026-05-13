@@ -1,12 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/colors.dart';
 import '../../models/product_model.dart';
 import '../../services/storage_service.dart';
 import '../../providers/product_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../widgets/producer_bottom_nav.dart';
 
 class ProducerAddProduct extends StatefulWidget {
@@ -31,7 +32,7 @@ class _ProducerAddProductState extends State<ProducerAddProduct> {
   bool _initialized = false;
 
   static const String _fallbackImage =
-      'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200';
+      'https://images.unsplash.com/photo-1592924357228-91a4daadcccf?w=1200';
 
   @override
   void didChangeDependencies() {
@@ -106,7 +107,8 @@ class _ProducerAddProductState extends State<ProducerAddProduct> {
         }
       } catch (_) {}
 
-      final provider = Provider.of<ProductProvider>(context, listen: false);
+      if (!mounted) return;
+      final provider = context.read<ProductProvider>();
       final prod = ProductModel(
         id:
             _editingProduct?.id ??
@@ -147,6 +149,8 @@ class _ProducerAddProductState extends State<ProducerAddProduct> {
     final previewLocation = _location.text.trim().isEmpty
         ? 'Labé, Guinée'
         : _location.text.trim();
+    final authProvider = context.watch<AuthProvider>();
+    final userName = authProvider.user?.name ?? 'Producteur Local';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F2F7),
@@ -452,14 +456,14 @@ class _ProducerAddProductState extends State<ProducerAddProduct> {
                         const Divider(),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: const [
-                            Text(
+                          children: [
+                            const Text(
                               '• Aperçu en direct',
                               style: TextStyle(color: Colors.black54),
                             ),
                             Text(
-                              'Saliou Diallo',
-                              style: TextStyle(fontWeight: FontWeight.w600),
+                              userName,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),

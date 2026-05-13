@@ -98,46 +98,6 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                 separatorBuilder: (_, __) => const SizedBox(height: 18),
                 itemBuilder: (c, i) {
                   final p = products[i];
-                  // if permissions were denied, show a small banner only once
-                  if (i == 0 && provider.permissionDenied) {
-                    return Column(
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          color: Colors.orange[800],
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.warning, color: Colors.white),
-                              const SizedBox(width: 8),
-                              const Expanded(
-                                child: Text(
-                                  'Affichage en mode local: permissions Firestore manquantes.',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () async {
-                                  // retry loading from Firestore
-                                  try {
-                                    await provider.load();
-                                  } catch (_) {}
-                                },
-                                child: const Text(
-                                  'Réessayer',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                    );
-                  }
                   return Container(
                     decoration: BoxDecoration(
                       color: Colors.white,

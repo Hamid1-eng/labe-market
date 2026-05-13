@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:provider/provider.dart';
 import '../../core/constants/colors.dart';
 import '../../providers/product_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../widgets/producer_bottom_nav.dart';
 
 class ProducerDashboard extends StatefulWidget {
-  final String userName;
-
-  const ProducerDashboard({super.key, this.userName = 'Saliou Diallo'});
+  const ProducerDashboard({super.key});
 
   @override
   State<ProducerDashboard> createState() => _ProducerDashboardState();
@@ -28,7 +27,8 @@ class _ProducerDashboardState extends State<ProducerDashboard> {
           await auth.signInAnonymously();
         }
       } catch (_) {}
-      final provider = Provider.of<ProductProvider>(context, listen: false);
+      if (!mounted) return;
+      final provider = context.read<ProductProvider>();
       await provider.load();
       if (mounted) setState(() => _loading = false);
     });
@@ -36,11 +36,13 @@ class _ProducerDashboardState extends State<ProducerDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<ProductProvider>(context);
+    final provider = context.watch<ProductProvider>();
+    final authProvider = context.watch<AuthProvider>();
     final sampleProducts = provider.items;
     final published = sampleProducts.length;
     final sold = published * 5; // dummy
     final rating = 4.9;
+    final userName = authProvider.user?.name ?? 'Producteur Local';
 
     return Scaffold(
       appBar: AppBar(
@@ -67,7 +69,7 @@ class _ProducerDashboardState extends State<ProducerDashboard> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        widget.userName,
+                        userName,
                         style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w800,
@@ -141,9 +143,9 @@ class _ProducerDashboardState extends State<ProducerDashboard> {
                                   ),
                                 ),
                                 const SizedBox(height: 4),
-                                Text(
+                                const Text(
                                   '+12%',
-                                  style: const TextStyle(color: Colors.green),
+                                  style: TextStyle(color: Colors.green),
                                 ),
                               ],
                             ),
